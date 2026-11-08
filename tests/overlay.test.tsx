@@ -27,7 +27,7 @@ describe("Overlay", () => {
     render(<Overlay state={state} />);
     expect(screen.getByTestId("session-value").textContent).toBe("12");
     expect(screen.getByTestId("total-value").textContent).toBe("1.234");
-    expect(screen.getByText("Fragen an den Kazekage")).toBeTruthy();
+    expect(screen.getByText("Kazekage-Nerv-o-Meter")).toBeTruthy();
     expect(screen.getByText("Dieser Stream")).toBeTruthy();
     expect(screen.getByText("Insgesamt")).toBeTruthy();
   });

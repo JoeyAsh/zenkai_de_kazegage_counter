@@ -202,7 +202,7 @@ export function Overlay({ state }: { state: CounterState | null }) {
               whiteSpace: "nowrap",
             }}
           >
-            Fragen an den Kazekage
+            Kazekage-Nerv-o-Meter
           </Box>
           <Box sx={{ mt: "3px", mb: "6px", ml: "-2px" }}>
             <WindStroke />

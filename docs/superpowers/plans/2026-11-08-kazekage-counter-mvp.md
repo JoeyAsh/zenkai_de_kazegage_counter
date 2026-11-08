@@ -240,9 +240,9 @@ Für alle Aktionen: max. **10 Aktionen pro Actor in 10 s** → `rate_limited`. G
 
 - [ ] **Step 1: Skill `frontend-design:frontend-design` laden** und Design gemäß `.claude/rules/design.md` festlegen (Sand/Wind, Tinte/Indigo, Windtürkis-Akzent; eigenes SVG, Kanji 風 erlaubt).
 - [ ] **Step 2: Failing tests** – `formatCount(0) === "0"`, `formatCount(1234) === "1.234"`; `diffKind`: null→state `"none"`, session 3→4 `"up"`, 4→3 `"down"`, 7→0 bei gleichem total `"reset"`.
-  `Overlay` (jsdom): mit `state = null` zeigt es „0“ für beide Werte; mit session 12/total 1234 zeigt es „12“ und „1.234“ sowie die Texte „Fragen an den Kazekage“, „Dieser Stream“, „Insgesamt“.
+  `Overlay` (jsdom): mit `state = null` zeigt es „0“ für beide Werte; mit session 12/total 1234 zeigt es „12“ und „1.234“ sowie die Texte „Kazekage-Nerv-o-Meter“, „Dieser Stream“, „Insgesamt“.
 - [ ] **Step 3: `npm test -- overlay`** → FAIL; dann `format.ts` und `Overlay.tsx` implementieren → PASS.
-- [ ] **Step 4: Overlay bauen** mit MUI (`ThemeProvider` + `kazekageTheme`, `CssBaseline` so konfiguriert, dass `body` transparent bleibt). Feste Texte: Titel „Fragen an den Kazekage“, Zeilen „Dieser Stream“ und „Insgesamt“. Hintergrund transparent, Zielgröße ca. 400×160 px, lesbar auf hellem und dunklem Spielbild (Kontur/Schatten). Animation nur bei `up`/`down`/`reset`, deaktiviert bei `prefers-reduced-motion`. Kein Login, keine Interaktion.
+- [ ] **Step 4: Overlay bauen** mit MUI (`ThemeProvider` + `kazekageTheme`, `CssBaseline` so konfiguriert, dass `body` transparent bleibt). Feste Texte: Titel „Kazekage-Nerv-o-Meter“, Zeilen „Dieser Stream“ und „Insgesamt“. Hintergrund transparent, Zielgröße ca. 400×160 px, lesbar auf hellem und dunklem Spielbild (Kontur/Schatten). Animation nur bei `up`/`down`/`reset`, deaktiviert bei `prefers-reduced-motion`. Kein Login, keine Interaktion.
 - [ ] **Step 5: Sichtprüfung** – `npm run dev`, `http://localhost:5173/zenkai_de_kazegage_counter/overlay.html` mit Playwright auf hellem und dunklem Hintergrund screenshotten; Wert in der lokalen DB per SQL ändern → Overlay aktualisiert sich ohne Reload.
 - [ ] **Step 6: Commit** – `feat(web): add kazekage counter overlay`
 
