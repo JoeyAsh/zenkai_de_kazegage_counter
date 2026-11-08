@@ -4,7 +4,7 @@ Twitch-Overlay mit einem Zähler für den Streamer **Presarioo**. Er spielt Role
 
 ## Status
 
-Die Architektur ist entschieden (siehe unten). Ein detaillierter Umsetzungsplan steht noch aus.
+MVP umgesetzt (Overlay, Mod-Panel, Edge Function, Datenbank, CI und Pages-Workflow). Offen: einmalige manuelle Einrichtung (Twitch-App, Supabase-Deploy, GitHub-Pages-Einstellungen), siehe `README.md`. Phase 2 (Chat-Befehl) steht aus.
 
 ## Architektur
 
@@ -59,7 +59,13 @@ Die Architektur ist entschieden (siehe unten). Ein detaillierter Umsetzungsplan 
 
 ## Befehle
 
-_Noch keine vorhanden. Werden nach der Architektur-Entscheidung ergänzt (install, dev, test, build, deploy)._
+- `npm run dev`: Vite-Dev-Server
+- `npm test`: Unit-Tests (Vitest)
+- `npm run test:db`: DB-Tests (pgTAP, braucht Docker)
+- `npm run typecheck`: TypeScript-Prüfung
+- `npm run build`: Typecheck und Build nach `dist/`
+- `npx supabase db push`: Migrationen auf das Projekt anwenden
+- `npx supabase functions deploy counter-action`: Edge Function deployen
 
 ## Weitere Regeln
 
