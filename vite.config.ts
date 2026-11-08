@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   root: "web",
-  base: "/zenkai_de_kazegage_counter/",
+  base: "/",
   envDir: "..",
   build: {
     outDir: "../dist",

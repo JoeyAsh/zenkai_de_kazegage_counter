@@ -6,26 +6,26 @@ Twitch-Overlay für **Presarioo**, der auf dem Server **Zenkai DE** als **Kazeka
 - **Mod-Panel** (`mod.html`): Twitch-Login, +1 / −1 / Session setzen / Session-Reset.
 - **Backend:** Supabase (Postgres + Edge Function `counter-action`). Geschrieben wird nur über die Edge Function, die prüft, ob der User Broadcaster oder Mod ist.
 
-Live: [Overlay](https://joeyash.github.io/zenkai_de_kazegage_counter/overlay.html) · [Mod-Panel](https://joeyash.github.io/zenkai_de_kazegage_counter/mod.html)
+Live: [Overlay](https://kazekage.gronzul.com/overlay.html) · [Mod-Panel](https://kazekage.gronzul.com/mod.html)
 
 ## OBS einrichten
 
 1. Quelle hinzufügen: **Browser**.
-2. URL: `https://joeyash.github.io/zenkai_de_kazegage_counter/overlay.html`
+2. URL: `https://kazekage.gronzul.com/overlay.html`
 3. Breite **400**, Höhe **160**.
 4. Eigenes CSS leer lassen (der Hintergrund ist bereits transparent).
 
 ## Für Mods
 
-1. `https://joeyash.github.io/zenkai_de_kazegage_counter/mod.html` öffnen.
+1. `https://kazekage.gronzul.com/mod.html` öffnen.
 2. Mit Twitch anmelden. Nur Broadcaster und Mods des Channels dürfen zählen, alle anderen bekommen die Meldung „Nur Mods …“.
 3. **+1** bei jeder Frage, **−1** zur Korrektur von Fehlklicks (kein Wert fällt unter 0), **Session setzen** für einen neuen Sessionwert, **Session-Reset** zu Beginn eines neuen Streams. Der Gesamtwert wird nie zurückgesetzt.
 
 ## Setup-Checkliste (einmalig)
 
 1. **Twitch-App anlegen** (Twitch Developer Console): Client-Typ **Public**, OAuth-Redirect-URLs
-   - `https://joeyash.github.io/zenkai_de_kazegage_counter/mod.html`
-   - `http://localhost:5173/zenkai_de_kazegage_counter/mod.html`
+   - `https://kazekage.gronzul.com/mod.html`
+   - `http://localhost:5173/mod.html`
 
    Die **Client-ID** notieren.
 2. **Supabase verknüpfen und Datenbank migrieren:**
@@ -36,7 +36,7 @@ Live: [Overlay](https://joeyash.github.io/zenkai_de_kazegage_counter/overlay.htm
    ```
 3. **Edge-Function-Secrets setzen und deployen** (`SUPABASE_URL` und `SUPABASE_SECRET_KEYS` stellt die Plattform bereit):
    ```
-   npx supabase secrets set TWITCH_CLIENT_ID=<client-id> TWITCH_CHANNEL_LOGIN=presarioo ALLOWED_ORIGINS=https://joeyash.github.io,http://localhost:5173
+   npx supabase secrets set TWITCH_CLIENT_ID=<client-id> TWITCH_CHANNEL_LOGIN=presarioo ALLOWED_ORIGINS=https://kazekage.gronzul.com,https://joeyash.github.io,http://localhost:5173
    npx supabase functions deploy counter-action
    ```
 4. **GitHub:** Repo öffentlich stellen, Settings → Pages → Source **GitHub Actions**. Unter Settings → Secrets and variables → Actions → **Variables** (nicht Secrets, die Werte sind öffentlich) anlegen:
@@ -53,15 +53,15 @@ Live: [Overlay](https://joeyash.github.io/zenkai_de_kazegage_counter/overlay.htm
    - Im Supabase-Dashboard steht „Verify JWT“ für `counter-action` auf **aus**.
    - CORS prüfen (in PowerShell `curl.exe` verwenden, nicht `curl`):
      ```
-     curl.exe -i -X OPTIONS https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://joeyash.github.io" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization, content-type"
+     curl.exe -i -X OPTIONS https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://kazekage.gronzul.com" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization, content-type"
      ```
-     Erwartet: `204` und genau ein Header `access-control-allow-origin: https://joeyash.github.io`.
+     Erwartet: `204` und genau ein Header `access-control-allow-origin: https://kazekage.gronzul.com`.
      ```
      curl.exe -i -X OPTIONS https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization, content-type"
      ```
      Erwartet: kein `access-control-allow-origin`-Header, insbesondere kein `*`.
      ```
-     curl.exe -i -X POST https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://joeyash.github.io"
+     curl.exe -i -X POST https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://kazekage.gronzul.com"
      ```
      Erwartet: `401` mit JSON-Body (ActionResponse) und gesetztem `access-control-allow-origin`.
 
@@ -77,7 +77,7 @@ Voraussetzung: Node 24. **Docker Desktop** wird für die lokale Supabase-Instanz
 npm ci
 cp .env.example .env     # Werte eintragen
 npx supabase start       # lokale Supabase-Instanz
-npm run dev              # http://localhost:5173/zenkai_de_kazegage_counter/overlay.html
+npm run dev              # http://localhost:5173/overlay.html
 ```
 
 Die Edge Function lokal: `supabase/.env.example` nach `supabase/.env.local` kopieren, `TWITCH_CLIENT_ID` eintragen und `npx supabase functions serve counter-action --env-file supabase/.env.local` starten. Hinweis: Das lokale `supabase functions serve` läuft über ein lokales Gateway, das selbst `Access-Control-Allow-Origin: *` ergänzt. CORS-Prüfungen lokal sind deshalb nicht aussagekräftig, dafür gelten die curl-Tests gegen die Produktion.
