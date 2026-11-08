@@ -37,6 +37,18 @@ describe("ControlPanel", () => {
     expect(screen.getByText(/somemod/)).toBeTruthy();
   });
 
+  it("shows a placeholder and disables actions until loaded", () => {
+    const { onAction } = setup({ state: null, loaded: false });
+    expect(screen.getByTestId("session-value").textContent).toBe("…");
+    expect(screen.getByTestId("total-value").textContent).toBe("…");
+    expect(screen.getByText("Lade Zählerstand …")).toBeTruthy();
+    expect(screen.queryByText("Noch keine Aktion")).toBeNull();
+    const plusOne = screen.getByRole("button", { name: /\+1 Frage/ }) as HTMLButtonElement;
+    expect(plusOne.disabled).toBe(true);
+    fireEvent.click(plusOne);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
   it("increments on click", () => {
     const { onAction } = setup();
     fireEvent.click(screen.getByRole("button", { name: "+1 Frage" }));

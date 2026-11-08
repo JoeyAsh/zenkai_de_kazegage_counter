@@ -33,16 +33,18 @@ function parseSessionInput(raw: string): number | null {
 
 interface Props {
   state: CounterState | null;
+  loaded?: boolean;
   busy: boolean;
   feedback: string | null;
   onAction(a: CounterAction): void;
   onLogout(): void;
 }
 
-export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Props) {
+export function ControlPanel({ state, loaded = true, busy, feedback, onAction, onLogout }: Props) {
   const [input, setInput] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const value = parseSessionInput(input);
+  const locked = busy || !loaded;
 
   return (
     <Box sx={{ maxWidth: 480, mx: "auto", px: "16px", py: 2, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -76,7 +78,7 @@ export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Prop
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {formatCount(state?.session ?? 0)}
+            {loaded ? formatCount(state?.session ?? 0) : "…"}
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mt: 0.5 }}>
@@ -85,22 +87,24 @@ export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Prop
             data-testid="total-value"
             sx={{ fontSize: 26, fontWeight: 700, color: tokens.ochre, fontVariantNumeric: "tabular-nums" }}
           >
-            {formatCount(state?.total ?? 0)}
+            {loaded ? formatCount(state?.total ?? 0) : "…"}
           </Typography>
         </Box>
       </Box>
 
       <Typography variant="body2" color="text.secondary" sx={{ minHeight: "1.5em" }}>
-        {state?.lastAction && state.lastActorLogin
-          ? `Zuletzt: ${ACTION_LABELS[state.lastAction]} von ${state.lastActorLogin}`
-          : "Noch keine Aktion"}
+        {!loaded
+          ? "Lade Zählerstand …"
+          : state?.lastAction && state.lastActorLogin
+            ? `Zuletzt: ${ACTION_LABELS[state.lastAction]} von ${state.lastActorLogin}`
+            : "Noch keine Aktion"}
       </Typography>
 
       {feedback && <Alert severity="warning">{feedback}</Alert>}
 
       <Button
         variant="contained"
-        disabled={busy}
+        disabled={locked}
         onClick={() => onAction({ type: "increment" })}
         sx={{ minHeight: 96, fontSize: 28, fontWeight: 900 }}
       >
@@ -110,7 +114,7 @@ export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Prop
       <Button
         variant="outlined"
         color="inherit"
-        disabled={busy}
+        disabled={locked}
         onClick={() => onAction({ type: "decrement" })}
         sx={{ minHeight: 48 }}
       >
@@ -129,7 +133,7 @@ export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Prop
         <Button
           variant="outlined"
           color="secondary"
-          disabled={busy || value === null}
+          disabled={locked || value === null}
           onClick={() => value !== null && onAction({ type: "set_session", value })}
         >
           Session setzen
@@ -139,7 +143,7 @@ export function ControlPanel({ state, busy, feedback, onAction, onLogout }: Prop
       <Button
         variant="outlined"
         color="warning"
-        disabled={busy}
+        disabled={locked}
         onClick={() => setConfirmOpen(true)}
         sx={{ minHeight: 48 }}
       >

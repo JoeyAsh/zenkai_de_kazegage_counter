@@ -15,7 +15,7 @@ import { clearToken, saveOAuthState } from "./storage.ts";
 const source = createSupabaseSource(config.supabaseUrl, config.supabasePublishableKey);
 
 function Panel({ token, onExpired, onLogout }: { token: string; onExpired(): void; onLogout(): void }) {
-  const { state: live } = useCounter(source, config.channelLogin);
+  const { state: live, loaded } = useCounter(source, config.channelLogin);
   const [fromResponse, setFromResponse] = useState<CounterState | null>(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -46,7 +46,7 @@ function Panel({ token, onExpired, onLogout }: { token: string; onExpired(): voi
     [token, onExpired],
   );
 
-  return <ControlPanel state={state} busy={busy} feedback={feedback} onAction={onAction} onLogout={onLogout} />;
+  return <ControlPanel state={state} loaded={loaded} busy={busy} feedback={feedback} onAction={onAction} onLogout={onLogout} />;
 }
 
 export function ModApp({ initialToken, initialError }: { initialToken: string | null; initialError: string | null }) {
