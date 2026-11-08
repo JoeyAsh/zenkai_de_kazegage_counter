@@ -34,6 +34,10 @@ alter table public.counter_event enable row level security;
 create policy counter_public_read on public.counter
   for select to anon, authenticated using (true);
 
+-- Supabase default grants give anon/authenticated everything (incl. TRUNCATE, which RLS does not block).
+revoke all on public.counter, public.counter_event from anon, authenticated;
+grant select on public.counter to anon, authenticated;
+
 alter publication supabase_realtime add table public.counter;
 
 create function public.apply_counter_action(

@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(28);
 
 -- Deterministic request ids and a call helper (channel '1' / 'presarioo').
 create function pg_temp.u(n int) returns uuid language sql as
@@ -94,12 +94,17 @@ select throws_ok($$ select pg_temp.act(200, 'r', 'reset_session') $$, 'ZK429', n
 select is((select count(*)::int from public.counter_event where request_id = pg_temp.u(200)), 0,
   'rejected action writes no event');
 
--- 20.-23. RLS as anon
+-- table privileges
+select table_privs_are('public', 'counter', 'anon', array['SELECT'], 'anon only has SELECT on counter');
+select table_privs_are('public', 'counter', 'authenticated', array['SELECT'], 'authenticated only has SELECT on counter');
+select table_privs_are('public', 'counter_event', 'anon', array[]::text[], 'anon has no privileges on counter_event');
+select table_privs_are('public', 'counter_event', 'authenticated', array[]::text[], 'authenticated has no privileges on counter_event');
+
+-- 20.-23. anon access
 set local role anon;
 select is((select count(*)::int from public.counter), 1, 'anon can read counter');
-with u as (update public.counter set session_count = 99 returning 1)
-select is((select count(*)::int from u), 0, 'anon update affects 0 rows');
-select is((select count(*)::int from public.counter_event), 0, 'anon sees no counter_event rows');
+select throws_ok($$ update public.counter set session_count = 99 $$, '42501', null, 'anon cannot update counter');
+select throws_ok($$ select count(*) from public.counter_event $$, '42501', null, 'anon cannot read counter_event');
 select throws_ok(
   $$ select public.apply_counter_action(gen_random_uuid(), '1', 'presarioo', 'a', 'a', 'increment', null) $$,
   '42501', null, 'anon cannot execute apply_counter_action');
