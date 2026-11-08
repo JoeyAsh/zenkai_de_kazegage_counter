@@ -6,7 +6,7 @@ Twitch-Overlay für **Presarioo**, der auf dem Server **Zenkai DE** als **Kazeka
 - **Mod-Panel** (`mod.html`): Twitch-Login, +1 / −1 / Session setzen / Session-Reset.
 - **Backend:** Supabase (Postgres + Edge Function `counter-action`). Geschrieben wird nur über die Edge Function, die prüft, ob der User Broadcaster oder Mod ist.
 
-Live: https://joeyash.github.io/zenkai_de_kazegage_counter/
+Live: [Overlay](https://joeyash.github.io/zenkai_de_kazegage_counter/overlay.html) · [Mod-Panel](https://joeyash.github.io/zenkai_de_kazegage_counter/mod.html)
 
 ## OBS einrichten
 
@@ -45,7 +45,29 @@ Live: https://joeyash.github.io/zenkai_de_kazegage_counter/
    - `VITE_TWITCH_CLIENT_ID`
    - `VITE_TWITCH_CHANNEL` (`presarioo`)
 5. **Deploy:** Push auf `main` (oder Workflow „Deploy to GitHub Pages“ manuell starten).
-6. **Smoke-Test:** Overlay öffnen (zeigt 0/0), im Mod-Panel einloggen, +1 klicken, Overlay aktualisiert sich. Login mit einem Nicht-Mod-Account zeigt „Nur Mods …“.
+6. **Smoke-Test (Produktion):**
+   - Overlay öffnen (zeigt 0/0), im Mod-Panel einloggen, +1 klicken: der Zähler steigt, das Overlay aktualisiert sich live.
+   - Das +1 eines zweiten Mods innerhalb von 3 s zeigt „Schon gezählt von <login>“.
+   - Ein Nicht-Mod-Account sieht die 403-Meldung „Nur Mods …“.
+   - Ein ungültiges oder abgelaufenes Token führt zurück zur Login-Ansicht.
+   - Im Supabase-Dashboard steht „Verify JWT“ für `counter-action` auf **aus**.
+   - CORS prüfen (in PowerShell `curl.exe` verwenden, nicht `curl`):
+     ```
+     curl.exe -i -X OPTIONS https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://joeyash.github.io" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization, content-type"
+     ```
+     Erwartet: `204` und genau ein Header `access-control-allow-origin: https://joeyash.github.io`.
+     ```
+     curl.exe -i -X OPTIONS https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://evil.example" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: authorization, content-type"
+     ```
+     Erwartet: kein `access-control-allow-origin`-Header, insbesondere kein `*`.
+     ```
+     curl.exe -i -X POST https://jbajgnkroqwmcteggntz.supabase.co/functions/v1/counter-action -H "Origin: https://joeyash.github.io"
+     ```
+     Erwartet: `401` mit JSON-Body (ActionResponse) und gesetztem `access-control-allow-origin`.
+
+## Supabase-Projekt pausiert
+
+Kostenlose Supabase-Projekte werden nach etwa 7 Tagen ohne Aktivität pausiert. Dann zeigt das Overlay 0/0, und Aktionen im Mod-Panel scheitern mit einem Verbindungsfehler. Die Daten bleiben erhalten. Abhilfe: Supabase-Dashboard öffnen, das Projekt wählen und **Restore** klicken. Regelmäßige Streams halten das Projekt wach.
 
 ## Lokale Entwicklung
 
@@ -57,6 +79,8 @@ cp .env.example .env     # Werte eintragen
 npx supabase start       # lokale Supabase-Instanz
 npm run dev              # http://localhost:5173/zenkai_de_kazegage_counter/overlay.html
 ```
+
+Die Edge Function lokal: `supabase/.env.example` nach `supabase/.env.local` kopieren, `TWITCH_CLIENT_ID` eintragen und `npx supabase functions serve counter-action --env-file supabase/.env.local` starten. Hinweis: Das lokale `supabase functions serve` läuft über ein lokales Gateway, das selbst `Access-Control-Allow-Origin: *` ergänzt. CORS-Prüfungen lokal sind deshalb nicht aussagekräftig, dafür gelten die curl-Tests gegen die Produktion.
 
 ## Befehle
 

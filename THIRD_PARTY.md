@@ -4,7 +4,7 @@
 
 | Font | Source | License | Used in |
 |------|--------|---------|---------|
-| Noto Serif JP | [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Serif+JP) | [SIL Open Font License 1.1](https://openfontlicense.org/) | `web/overlay.html` (title, labels, numbers, kanji 風) |
+| Noto Serif JP | [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Serif+JP) | [SIL Open Font License 1.1](https://openfontlicense.org/) | `web/overlay.html` (title, labels, numbers, kanji 風) and `web/mod.html` |
 
 The font is loaded from Google Fonts at runtime and is not redistributed in this repository.
 
