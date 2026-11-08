@@ -44,6 +44,33 @@ describe("sendAction", () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
+  it("aborts a hanging request, retries with the same requestId, then returns internal", async () => {
+    const fetchFn = vi.fn(
+      (_url: unknown, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init!.signal!.addEventListener("abort", () => reject(init!.signal!.reason));
+        }),
+    );
+    const res = await sendAction("t", { type: "increment" }, { ...opts, fetchFn, timeoutMs: 20 });
+    expect(res).toMatchObject({ ok: false, error: "internal" });
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    const calls = fetchFn.mock.calls as unknown as [string, RequestInit & { body: string }][];
+    expect(JSON.parse(calls[0]![1].body).requestId).toBe(JSON.parse(calls[1]![1].body).requestId);
+    expect(calls[0]![1].signal).not.toBe(calls[1]![1].signal);
+  });
+
+  it("succeeds when the retry after a timeout answers", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockImplementationOnce(
+        (_u: unknown, init: RequestInit) =>
+          new Promise<Response>((_r, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason))),
+      )
+      .mockResolvedValueOnce(json(200, { ok: true, state: {} }));
+    const res = await sendAction("t", { type: "increment" }, { ...opts, fetchFn, timeoutMs: 20 });
+    expect(res.ok).toBe(true);
+  });
+
   it("treats an unparseable response body as internal error", async () => {
     const fetchFn = vi.fn().mockResolvedValue(new Response("<html>", { status: 502 }));
     expect(await sendAction("t", { type: "increment" }, { ...opts, fetchFn })).toMatchObject({
