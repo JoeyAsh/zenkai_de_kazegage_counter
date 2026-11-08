@@ -48,20 +48,34 @@ export function watchCounter(
   onState: (s: CounterState | null) => void,
 ): () => void {
   let stopped = false;
+  let requestSeq = 0;
+  let lastAppliedAt: number | null = null;
+
+  // Apply a row unless it is older than what is already shown (equal timestamps are fine).
+  const apply = (row: CounterRow) => {
+    const at = Date.parse(row.updated_at);
+    if (lastAppliedAt !== null && at < lastAppliedAt) return;
+    lastAppliedAt = at;
+    onState(counterRowToState(row));
+  };
 
   const refresh = async () => {
+    const seq = ++requestSeq;
     try {
       const row = await source.fetchByLogin(login);
-      if (!stopped) onState(row ? counterRowToState(row) : null);
-    } catch {
+      if (stopped || seq !== requestSeq) return; // superseded by a newer fetch
+      if (row) apply(row);
+      else if (lastAppliedAt === null) onState(null);
+    } catch (err) {
       // keep the last known value; the next SUBSCRIBED triggers another attempt
+      console.warn("Counter fetch failed:", err instanceof Error ? err.message : "unknown error");
     }
   };
 
   const unsubscribe = source.onRowChange(
     login,
     (row) => {
-      if (!stopped) onState(counterRowToState(row));
+      if (!stopped) apply(row);
     },
     (status) => {
       if (!stopped && status === "SUBSCRIBED") void refresh();

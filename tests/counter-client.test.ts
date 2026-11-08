@@ -2,14 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import { watchCounter, type CounterSource } from "../web/src/counter-client.ts";
 import type { CounterRow } from "../supabase/functions/_shared/protocol.ts";
 
-const row = (session: number, total: number): CounterRow => ({
+const row = (session: number, total: number, updatedAt = "2026-01-01T00:00:00Z"): CounterRow => ({
   channel_id: "1",
   channel_login: "presarioo",
   session_count: session,
   total_count: total,
   last_action: "increment",
   last_actor_login: "mod1",
-  updated_at: "2026-01-01T00:00:00Z",
+  updated_at: updatedAt,
 });
 
 function fakeSource(fetchImpl: () => Promise<CounterRow | null>) {
@@ -73,6 +73,7 @@ describe("watchCounter", () => {
   });
 
   it("keeps the last value when fetch fails and retries on next SUBSCRIBED", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     let fail = true;
     const f = fakeSource(async () => {
       if (fail) throw new Error("network");
@@ -82,6 +83,7 @@ describe("watchCounter", () => {
     watchCounter(f.source, "presarioo", onState);
     await flush();
     expect(onState).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(1);
     fail = false;
     f.status("SUBSCRIBED");
     await flush();
@@ -102,5 +104,32 @@ describe("watchCounter", () => {
     f.status("SUBSCRIBED");
     expect(onState).not.toHaveBeenCalled();
     expect(f.fetchByLogin).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a fetched row older than an already applied realtime row", async () => {
+    let resolve: (r: CounterRow | null) => void = () => {};
+    const f = fakeSource(() => new Promise((r) => (resolve = r)));
+    const onState = vi.fn();
+    watchCounter(f.source, "presarioo", onState);
+    f.emit(row(2, 2, "2026-01-01T00:00:10Z"));
+    resolve(row(1, 1, "2026-01-01T00:00:05Z"));
+    await flush();
+    expect(onState).toHaveBeenCalledTimes(1);
+    expect(onState).toHaveBeenLastCalledWith(expect.objectContaining({ session: 2 }));
+  });
+
+  it("drops a superseded fetch that resolves last", async () => {
+    const resolvers: Array<(r: CounterRow | null) => void> = [];
+    const f = fakeSource(() => new Promise((r) => resolvers.push(r)));
+    const onState = vi.fn();
+    watchCounter(f.source, "presarioo", onState);
+    f.status("SUBSCRIBED");
+    expect(resolvers).toHaveLength(2);
+    resolvers[1]!(row(2, 2, "2026-01-01T00:00:01Z"));
+    await flush();
+    resolvers[0]!(row(9, 9, "2026-01-01T00:00:09Z"));
+    await flush();
+    expect(onState).toHaveBeenCalledTimes(1);
+    expect(onState).toHaveBeenLastCalledWith(expect.objectContaining({ session: 2 }));
   });
 });
