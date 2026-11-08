@@ -1,5 +1,5 @@
 begin;
-select plan(28);
+select plan(29);
 
 -- Deterministic request ids and a call helper (channel '1' / 'presarioo').
 create function pg_temp.u(n int) returns uuid language sql as
@@ -102,12 +102,19 @@ select table_privs_are('public', 'counter_event', 'authenticated', array[]::text
 
 -- 20.-23. anon access
 set local role anon;
-select is((select count(*)::int from public.counter), 1, 'anon can read counter');
+select is((select count(*)::int from public.counter where channel_id = '1'), 1, 'anon can read counter');
 select throws_ok($$ update public.counter set session_count = 99 $$, '42501', null, 'anon cannot update counter');
 select throws_ok($$ select count(*) from public.counter_event $$, '42501', null, 'anon cannot read counter_event');
 select throws_ok(
   $$ select public.apply_counter_action(gen_random_uuid(), '1', 'presarioo', 'a', 'a', 'increment', null) $$,
   '42501', null, 'anon cannot execute apply_counter_action');
+reset role;
+
+-- 24. service_role (used by the edge function) can execute the function
+set local role service_role;
+select lives_ok(
+  $$ select public.apply_counter_action(gen_random_uuid(), 'svc', 'svclogin', 's', 's', 'increment', null) $$,
+  'service_role can execute apply_counter_action');
 reset role;
 
 select * from finish();
