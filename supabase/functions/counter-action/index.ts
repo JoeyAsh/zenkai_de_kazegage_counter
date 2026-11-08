@@ -43,7 +43,7 @@ async function apply(args: ApplyArgs): Promise<ApplyResult> {
 Deno.serve(
   createHandler({
     clientId: requireEnv("TWITCH_CLIENT_ID"),
-    channelLogin: requireEnv("TWITCH_CHANNEL_LOGIN"),
+    channelLogin: requireEnv("TWITCH_CHANNEL_LOGIN").toLowerCase(),
     allowedOrigins: requireEnv("ALLOWED_ORIGINS")
       .split(",")
       .map((o) => o.trim())
