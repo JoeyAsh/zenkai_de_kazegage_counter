@@ -4,7 +4,7 @@ Twitch-Overlay mit einem Zähler für den Streamer **Presarioo**. Er spielt Role
 
 ## Status
 
-Die Architektur ist entschieden (siehe unten). Ein detaillierter Umsetzungsplan steht noch aus.
+MVP umgesetzt (Overlay, Mod-Panel, Edge Function, Datenbank, CI und Pages-Workflow). Offen: einmalige manuelle Einrichtung (Twitch-App, Supabase-Deploy, GitHub-Pages-Einstellungen), siehe `README.md`. Phase 2 (Chat-Befehl) steht aus.
 
 ## Architektur
 
@@ -24,7 +24,7 @@ Die Architektur ist entschieden (siehe unten). Ein detaillierter Umsetzungsplan 
                                                      Twitch Helix API
 ```
 
-- **Frontend:** Statische Seiten auf GitHub Pages, TypeScript ohne Framework. `overlay.html` ist rein lesend, hat einen transparenten Hintergrund und abonniert Änderungen über Supabase Realtime. `mod.html` meldet die Mods per Twitch-OAuth an und schickt jede Aktion an die Edge Function.
+- **Frontend:** Statische Seiten auf GitHub Pages, TypeScript mit React und MUI (`@mui/material`), gebaut mit Vite. `overlay.html` ist rein lesend, hat einen transparenten Hintergrund und abonniert Änderungen über Supabase Realtime. `mod.html` meldet die Mods per Twitch-OAuth an und schickt jede Aktion an die Edge Function.
 - **Backend:** Supabase.
   - Schreibzugriffe laufen **ausschließlich** über die Edge Function `counter-action`. Sie validiert das Twitch-Token, prüft, ob der User Broadcaster oder Mod des Channels ist, und ruft dann eine Postgres-Funktion auf, die die Änderung atomar durchführt und im Audit-Log festhält.
   - Der `anon`-Key darf nur lesen. Der Service-Role-Key existiert nur in der Edge Function.
@@ -59,7 +59,13 @@ Die Architektur ist entschieden (siehe unten). Ein detaillierter Umsetzungsplan 
 
 ## Befehle
 
-_Noch keine vorhanden. Werden nach der Architektur-Entscheidung ergänzt (install, dev, test, build, deploy)._
+- `npm run dev`: Vite-Dev-Server
+- `npm test`: Unit-Tests (Vitest)
+- `npm run test:db`: DB-Tests (pgTAP, braucht Docker)
+- `npm run typecheck`: TypeScript-Prüfung
+- `npm run build`: Typecheck und Build nach `dist/`
+- `npx supabase db push`: Migrationen auf das Projekt anwenden
+- `npx supabase functions deploy counter-action`: Edge Function deployen
 
 ## Weitere Regeln
 
